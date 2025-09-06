@@ -19,11 +19,11 @@ endef
 init:
 	@echo "Initializing project..."
 	docker network create --driver bridge reverse-proxy
-
+# Portainer
 portainer:
 	docker volume create portainer_data
 	$(call docker_rebuild,"portainer")
-
+# NGINX Proxy Manager
 nginxpm:
 	docker volume create nginxpm_data
 	docker volume create nginxpm_letsencrypt
