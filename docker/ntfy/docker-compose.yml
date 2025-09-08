@@ -5,6 +5,7 @@ volumes:
 networks:
   reverse-proxy:
     external: true
+
 services:
   ntfy:
     image: binwiederhier/ntfy:latest
@@ -17,6 +18,8 @@ services:
     volumes:
       - /var/cache/ntfy:/var/cache/ntfy
       - /etc/ntfy:/etc/ntfy
+    networks:
+      - reverse-proxy      
     ports:
       - 8000:80
     restart: unless-stopped
