@@ -13,7 +13,7 @@ services:
       - serve
     environment:
       - TZ=UTC    # optional: set desired timezone
-    user: UID:GID # optional: replace with your own user/group or uid/gid
+    #user: UID:GID # optional: replace with your own user/group or uid/gid
     volumes:
       - /var/cache/ntfy:/var/cache/ntfy
       - /etc/ntfy:/etc/ntfy
