@@ -1,6 +1,13 @@
+volumes:
+  ntfy_data:
+    external: true
+
+networks:
+  reverse-proxy:
+    external: true
 services:
   ntfy:
-    image: binwiederhier/ntfy
+    image: binwiederhier/ntfy:latest
     container_name: ntfy
     command:
       - serve
