@@ -15,11 +15,6 @@ services:
     environment:
       - TZ=UTC    # optional: set desired timezone
     #user: UID:GID # optional: replace with your own user/group or uid/gid
-      # Configurazione SMTP per MailJet
-      #- NTFY_SMTP_SENDER_ADDR=smtp.mailjet.com:587
-      #- NTFY_SMTP_SENDER_FROM=baravelli.riccardo@hotmail.com      # Email mittente verificata su MailJet
-      #- NTFY_SMTP_SENDER_USER=d3959ab6c614153769ebe40451cc1a39    # API Key di MailJet
-      #- NTFY_SMTP_SENDER_PASS=f1e603e69bb54f973bf68bb82d397f13    # Secret Key di MailJet
 
     volumes:
       #- /var/cache/ntfy:/var/cache/ntfy
