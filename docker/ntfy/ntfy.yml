@@ -1,8 +1,0 @@
-smtp:
-  enabled: true
-  host: "in-v3.mailjet.com"
-  port: 587
-  auth-username: "d3959ab6c614153769ebe40451cc1a39"
-  auth-password: "f1e603e69bb54f973bf68bb82d397f13"
-  sender: "baravelli.riccardo@hotmail.com"
-  tls: true
