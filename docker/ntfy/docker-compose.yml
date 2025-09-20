@@ -17,11 +17,8 @@ services:
     #user: UID:GID # optional: replace with your own user/group or uid/gid
 
     volumes:
-      #- /var/cache/ntfy:/var/cache/ntfy
-      #- /etc/ntfy:/etc/ntfy
-      - ntfy_data:/var/cache/ntfy
-      - ./ntfy.yml:/etc/ntfy/ntfy.yml
-      # La riga sopra monta il file di configurazione      
+      - /var/cache/ntfy:/var/cache/ntfy
+      - /etc/ntfy:/etc/ntfy
     networks:
       - reverse-proxy      
     ports:
