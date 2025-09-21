@@ -21,7 +21,7 @@ services:
       - /etc/ntfy:/etc/ntfy
       - ./server.yml:/etc/ntfy/server.yml
     networks:
-      - reverse-proxy      
+      - reverse-proxy
     ports:
       - 8000:80
     restart: unless-stopped
