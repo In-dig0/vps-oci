@@ -57,7 +57,8 @@ services:
       - TZ=Europe/Rome
       - APPRISE_STATEFUL_MODE=simple
       - APPRISE_WORKER_COUNT=1
-      - APPRISE_CONFIG_LOCK=yes  # Protezione configurazione      
+      - APPRISE_CONFIG_LOCK=yes  # Protezione configurazione
+      - APPRISE_CONFIG_LOCK=no      
     ports:
       - 8000:8000 # adjust host port as needed
     volumes:
