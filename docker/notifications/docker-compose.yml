@@ -1,0 +1,55 @@
+name: notifications
+
+networks:
+  reverse-proxy:
+    external: true
+
+services:
+  ntfy:
+    image: 'binwiederhier/ntfy:latest'
+    restart: 'unless-stopped'
+    command: ['serve']
+    #user: ${PUID:-1000}:${PGID:-100} # optionally run as non-root user (adjust PUID:PGID as needed)
+    environment:
+      - TZ=Europe/Rome # adjust to your timezone - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+    ports:
+      - 8080:80 # adjust host port as needed
+    volumes:
+      - 'ntfy-data:/var/lib/ntfy'
+    networks:
+      - reverse-proxy
+      - default
+    healthcheck: # optional, remember to adjust the host:port to your environment
+      test:
+        - 'CMD-SHELL'
+        - "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -Eo '\"healthy\"\\s*:\\s*true' || exit 1"
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    init: true # needed, if healthcheck is used. prevents zombie processes
+
+
+  apprise:
+    image: caronc/apprise:latest
+    restart: unless-stopped
+
+    environment:
+#      - PUID=${PUID:-1000}
+#      - PGID=${PGID:-100}
+      - TZ=Europe/Rome
+      - APPRISE_STATEFUL_MODE=simple
+      - APPRISE_WORKER_COUNT=1
+      - APPRISE_CONFIG_LOCK=yes  # Protezione configurazione      
+    ports:
+      - 8000:8000 # adjust host port as needed
+    volumes:
+      - apprise-config:/config
+      - apprise-plugin:/plugin
+      - apprise-attach:/attach
+
+volumes:
+  ntfy-data:
+  apprise-config:
+  apprise-plugin:
+  apprise-attach:
