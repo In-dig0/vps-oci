@@ -4,9 +4,25 @@ networks:
   reverse-proxy:
     external: true
 
+volumes:
+  ntfy-data:
+    name: notifications_ntfy-data
+    external: true
+  apprise-config:
+    name: notifications_apprise-config
+    external: true
+  apprise-plugin:
+    name: notifications_apprise-plugin
+    external: true
+  apprise-attach:
+    name: notifications_apprise-attach
+    external: true
+
+
 services:
   ntfy:
     image: 'binwiederhier/ntfy:latest'
+    container_name: ntfy
     restart: 'unless-stopped'
     command: ['serve']
     #user: ${PUID:-1000}:${PGID:-100} # optionally run as non-root user (adjust PUID:PGID as needed)
@@ -14,8 +30,9 @@ services:
       - TZ=Europe/Rome # adjust to your timezone - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
     ports:
       - 8080:80 # adjust host port as needed
+
     volumes:
-      - 'ntfy-data:/var/lib/ntfy'
+      - ntfy-data:/var/lib/ntfy
     networks:
       - reverse-proxy
       - default
@@ -32,8 +49,8 @@ services:
 
   apprise:
     image: caronc/apprise:latest
+    container_name: apprise
     restart: unless-stopped
-
     environment:
 #      - PUID=${PUID:-1000}
 #      - PGID=${PGID:-100}
@@ -47,9 +64,6 @@ services:
       - apprise-config:/config
       - apprise-plugin:/plugin
       - apprise-attach:/attach
-
-volumes:
-  ntfy-data:
-  apprise-config:
-  apprise-plugin:
-  apprise-attach:
+    networks:
+      - reverse-proxy
+      - default      
