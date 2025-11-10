@@ -28,9 +28,9 @@ nginxpm:
 	$(call docker_rebuild,"nginxpm")
 
 # NTFY SERVER
-ntfy:
-	docker volume create ntfy_data
-	$(call docker_rebuild,"ntfy")
+# ntfy:
+# 	docker volume create ntfy_data
+# 	$(call docker_rebuild,"ntfy")
 
 # NOTIFICATIONS SERVICES
 notifications:
