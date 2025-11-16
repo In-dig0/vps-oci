@@ -1,2 +1,2 @@
-.env
-docker/notifications/.env
+*.env
+docker/notifications/*.env
