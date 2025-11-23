@@ -1,4 +1,4 @@
-name: notifications
+#name: notifications
 
 networks:
   reverse-proxy:
@@ -28,11 +28,14 @@ services:
     #user: ${PUID:-1000}:${PGID:-100} # optionally run as non-root user (adjust PUID:PGID as needed)
     environment:
       - TZ=Europe/Rome # adjust to your timezone - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+      - NTFY_BASE_URL=${NTFY_BASE_URL}
     ports:
       - 8080:80 # adjust host port as needed
 
     volumes:
       - ntfy-data:/var/lib/ntfy
+      # 🚨 AGGIUNGI QUESTO BIND MOUNT:
+      - ./config/server.yml:/etc/ntfy/server.yml      
     networks:
       - reverse-proxy
       - default

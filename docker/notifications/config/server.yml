@@ -1,0 +1,29 @@
+# /etc/ntfy/server.yml
+
+# Public URL where your ntfy server will be reachable
+#base-url: http://localhost:8080/
+
+base-url: ${NTFY_BASE_URL}
+
+# Listen on HTTP (inside container)
+#listen-http: ":80"
+
+# Optional: enable HTTPS if you have certs mounted
+# listen-https: ":443"
+# key-file: /etc/ssl/private/ntfy.key
+# cert-file: /etc/ssl/certs/ntfy.crt
+
+# Authentication (optional)
+auth-file: /var/lib/ntfy/auth.db # Utilizziamo il percorso nel volume persistente
+auth-default-access: deny-all    # ✅ Corretto per bloccare l'accesso
+enable-signup: false # Permette agli utenti di registrarsi (opzionale)
+enable-login: true  # Abilita il pulsante di login nella WebUI
+
+# Message storage
+cache-file: /var/lib/ntfy/cache.db          
+attachment-cache-dir: /var/lib/ntfy/attachments 
+attachment-expiry-duration: 3h
+attachment-total-size-limit: 100M
+
+# Logging
+log-level: info
