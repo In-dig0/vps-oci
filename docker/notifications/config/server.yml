@@ -20,10 +20,11 @@ enable-signup: false # Permette agli utenti di registrarsi (opzionale)
 enable-login: true  # Abilita il pulsante di login nella WebUI
 
 # Message storage
-cache-file: /var/lib/ntfy/cache.db          
+cache-file: /var/lib/ntfy/cache.db
+cache-duration: 96h # 4 days          
 attachment-cache-dir: /var/lib/ntfy/attachments 
-attachment-expiry-duration: 3h
-attachment-total-size-limit: 100M
+attachment-expiry-duration: 24h
+attachment-total-size-limit: 50M
 
 # Logging
 log-level: info
