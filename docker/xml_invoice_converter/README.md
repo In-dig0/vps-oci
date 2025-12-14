@@ -239,7 +239,7 @@ Questo progetto è distribuito sotto licenza MIT. Vedi il file `LICENSE` per mag
 ## 👤 Autore
 
 **Riccardo Baravelli**
-- GitHub: [@tuousername](https://github.com/In-dig0)
+- GitHub: [Ind-dig0](https://github.com/In-dig0)
 
 ## 🙏 Ringraziamenti
 
