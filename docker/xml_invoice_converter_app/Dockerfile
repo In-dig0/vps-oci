@@ -23,8 +23,8 @@ ENV TZ=Europe/Rome
 ENV DOCKER_CONTAINER=true
 
 # Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl --fail http://localhost:8502/_stcore/health || exit 1
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+#   CMD curl --fail http://localhost:8502/_stcore/health || exit 1
 
 # Comando per avviare l'applicazione tramite run.py
 CMD ["python", "run.py"]
