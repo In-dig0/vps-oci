@@ -238,9 +238,8 @@ Questo progetto è distribuito sotto licenza MIT. Vedi il file `LICENSE` per mag
 
 ## 👤 Autore
 
-**Il Tuo Nome**
-- GitHub: [@tuousername](https://github.com/tuousername)
-- Email: tua.email@example.com
+**Riccardo Baravelli**
+- GitHub: [@tuousername](https://github.com/In-dig0)
 
 ## 🙏 Ringraziamenti
 
