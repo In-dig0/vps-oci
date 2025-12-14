@@ -1,0 +1,25 @@
+#version: '3.13'
+networks:
+  reverse-proxy:
+    external: true
+
+services:
+  xml_invoice_converter:
+    build: .
+    container_name: xml_invoice_converter_app
+    volumes:
+      # Opzionale: monta anche logs se vuoi mantenerli persistenti
+      - ./logs:/xml_invoice_converter_app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Europe/Rome
+    env_file:
+      - .env
+    networks:
+      - reverse-proxy
+      - default    
+    ports:
+      - "8502:8502"      
+    restart: unless-stopped
+
+    
