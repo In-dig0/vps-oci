@@ -62,6 +62,7 @@ venv.bak/
 # ============================================
 # Logs
 # ============================================
+logs/
 *.log
 app.log
 error.log
@@ -77,12 +78,10 @@ src/data/backup/*.xlsx
 src/data/backup/*.xls
 src/data/backup/*
 
-# Output forecast (risultati elaborazioni)
-src/data/output/forecast/*.json
 
 # Se vuoi tenere la struttura ma non i contenuti, decommenta:
-# data/input/*
-# data/output/*
+data/input/*
+data/output/*
 # !data/input/.gitkeep
 # !data/output/.gitkeep
 

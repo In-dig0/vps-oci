@@ -13,12 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia tutto il codice sorgente
 COPY . .
 
-# Espone la porta 8502 per Streamlit
+# Espone la porta 8502
 EXPOSE 8502
-
-# Configura Streamlit per accettare connessioni da qualsiasi IP
-ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
-ENV STREAMLIT_SERVER_PORT=8502
 ENV TZ=Europe/Rome
 ENV DOCKER_CONTAINER=true
 

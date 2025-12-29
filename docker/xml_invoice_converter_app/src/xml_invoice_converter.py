@@ -1,21 +1,20 @@
 """
-XML Invoice Converter - Streamlit WebApp
+XML Invoice Converter - NiceGUI WebApp
 Converts XML B2B invoices to Excel format with logging capabilities.
 """
 
 import io
 import logging
 import os
-import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import streamlit as st
 import xmltodict
 from zoneinfo import ZoneInfo
+from nicegui import ui, app
 
 # Configuration
 APP_NAME = "XML_CONVERTER"
@@ -23,7 +22,7 @@ APP_CODE = "XMLC_v2"
 TIMEZONE = ZoneInfo("Europe/Rome")
 VERSION = "2.0"
 
-# Log configuration - logs folder at project root level
+# Log configuration
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 LOG_DIR = PROJECT_ROOT / "logs"
 LOG_FILE = LOG_DIR / "app_usage.log"
@@ -89,27 +88,20 @@ class XMLInvoiceParser:
     
     def parse(
         self, 
-        uploaded_file: Any,
+        content: bytes,
+        filename: str,
         enable_grouping: bool = False,
         manage_energy_contribution: bool = False
     ) -> pd.DataFrame:
-        """
-        Parse XML invoice file and return DataFrame.
-        
-        Args:
-            uploaded_file: Streamlit uploaded file object
-            enable_grouping: Whether to group results by specific fields
-            manage_energy_contribution: Whether to manage energy contributions
-            
-        Returns:
-            DataFrame with parsed invoice data
-        """
+        """Parse XML invoice file and return DataFrame."""
         try:
             self._reset_state()
-            xml_dict = self._load_xml(uploaded_file)
+            xml_dict = xmltodict.parse(content.decode('utf-8'))
             root_tag = next(iter(xml_dict))
             
             invoice_data = self._extract_invoice_data(xml_dict, root_tag)
+            invoice_data.filename = filename
+            
             lines_data = self._extract_lines_data(
                 xml_dict, 
                 root_tag, 
@@ -125,13 +117,7 @@ class XMLInvoiceParser:
             
         except Exception as e:
             logger.error(f"Error parsing XML file: {e}", exc_info=True)
-            st.error(f"Error parsing XML: {str(e)}")
-            return pd.DataFrame()
-    
-    def _load_xml(self, uploaded_file: Any) -> Dict:
-        """Load and parse XML file."""
-        content = io.StringIO(uploaded_file.getvalue().decode("utf-8")).read()
-        return xmltodict.parse(content)
+            raise
     
     def _extract_nested_value(
         self, 
@@ -155,7 +141,7 @@ class XMLInvoiceParser:
         general_data = body["DatiGenerali"]["DatiGeneraliDocumento"]
         
         return InvoiceData(
-            filename="",  # Set later
+            filename="",
             supplier_vat=self._extract_nested_value(
                 header, ["CedentePrestatore", "DatiAnagrafici", "IdFiscaleIVA", "IdCodice"]
             ),
@@ -190,12 +176,10 @@ class XMLInvoiceParser:
     
     def _parse_line(self, line: Dict, manage_energy: bool) -> LineData:
         """Parse single invoice line."""
-        # Extract basic line data
         article_code = self.DEFAULT_VALUE
         if isinstance(line.get("CodiceArticolo"), dict):
             article_code = line["CodiceArticolo"].get("CodiceValore", self.DEFAULT_VALUE)
         
-        # Extract attachments
         attachments = line.get("AltriDatiGestionali", [])
         attachment_data = self._process_attachments(attachments, manage_energy)
         
@@ -260,7 +244,6 @@ class XMLInvoiceParser:
                 if result[field] == self.DEFAULT_VALUE:
                     result[field] = self._previous_values[field]
         
-        # Update previous values
         for field in ['drawing_number', 'order_number', 'ddt_number']:
             if result[field] != self.DEFAULT_VALUE:
                 self._previous_values[field] = result[field]
@@ -299,7 +282,6 @@ class XMLInvoiceParser:
         
         df = pd.DataFrame(data)
         
-        # Convert numeric columns
         numeric_cols = ['T_importo_doc', 'P_qta', 'P_przunit', 'P_prezzo_tot']
         for col in numeric_cols:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
@@ -335,35 +317,15 @@ class UsageLogger:
         message: str = "",
         action: str = "PROCESS"
     ) -> None:
-        """
-        Log application usage.
-        
-        Args:
-            filename: Name of the processed file
-            status: Processing status
-            message: Additional message
-            action: Action type (PROCESS, DOWNLOAD, etc.)
-        """
+        """Log application usage."""
         try:
             timestamp = datetime.now(TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
             
-            log_entry = {
-                "timestamp": timestamp,
-                "app_name": APP_NAME,
-                "app_code": APP_CODE,
-                "action": action,
-                "filename": filename,
-                "status": status,
-                "message": message
-            }
-            
-            # Create formatted log entry
             log_line = (
                 f"{timestamp} | {APP_NAME} | {APP_CODE} | {action} | "
                 f"{filename} | {status} | {message}\n"
             )
             
-            # Append to log file
             with open(self.log_file, 'a', encoding='utf-8') as f:
                 f.write(log_line)
             
@@ -378,27 +340,16 @@ class ExcelExporter:
     def create_excel_buffer(
         df: pd.DataFrame, 
         sheet_name: str = "Invoice"
-    ) -> io.BytesIO:
-        """
-        Create Excel file in memory buffer.
-        
-        Args:
-            df: DataFrame to export
-            sheet_name: Name of the Excel sheet
-            
-        Returns:
-            BytesIO buffer containing Excel file
-        """
+    ) -> bytes:
+        """Create Excel file in memory buffer."""
         buffer = io.BytesIO()
         
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
             df.to_excel(writer, sheet_name=sheet_name, index=False)
             
-            # Get workbook and worksheet
             workbook = writer.book
             worksheet = writer.sheets[sheet_name]
             
-            # Add formatting
             header_format = workbook.add_format({
                 'bold': True,
                 'bg_color': '#4472C4',
@@ -406,210 +357,331 @@ class ExcelExporter:
                 'border': 1
             })
             
-            # Apply header format
             for col_num, value in enumerate(df.columns.values):
                 worksheet.write(0, col_num, value, header_format)
         
         buffer.seek(0)
-        return buffer
+        return buffer.getvalue()
 
 
-def initialize_session_state() -> None:
-    """Initialize Streamlit session state variables."""
-    defaults = {
-        "clicked": False,
-        "download_completed": False,
-        "prev_grouping_opt": None,
-        "prev_energy_mgmt": None,
-        "process_logged": False
+# Global state
+class AppState:
+    def __init__(self):
+        self.df = None
+        self.uploaded_file_name = None
+        self.uploaded_file_content = None
+        self.enable_grouping = False
+        self.manage_energy = False
+
+
+state = AppState()
+parser = XMLInvoiceParser()
+usage_logger = UsageLogger()
+
+# Detect environment
+in_docker = os.path.exists('/.dockerenv') or os.getenv('DOCKER_CONTAINER') == 'true'
+env_badge = "🐳 Docker" if in_docker else "💻 Local"
+
+# Configure dark mode
+dark_mode = ui.dark_mode()
+
+# Set background and card colors with CSS that responds to dark mode
+ui.add_head_html('''
+<style>
+    /* Light mode */
+    body {
+        background-color: #ffffff !important;
+        transition: background-color 0.3s ease;
     }
     
-    for key, value in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = value
+    /* Dark mode */
+    .body--dark {
+        background-color: #121212 !important;
+    }
+    
+    /* Light mode cards */
+    .q-card {
+        background-color: #f5f5f5 !important;
+    }
+    
+    /* Dark mode cards */
+    .body--dark .q-card {
+        background-color: #1e1e1e !important;
+    }
+</style>
+''')
 
+# Dark mode toggle in top right corner
+with ui.row().classes('w-full justify-end mb-2'):
+    ui.button(
+        icon='dark_mode', 
+        on_click=dark_mode.toggle
+    ).props('flat round').tooltip('Toggle dark/light mode')
 
-def reset_download_state() -> None:
-    """Reset download state callback."""
-    st.session_state.download_completed = False
+# Header card
+with ui.card().classes('w-full mb-4'):
+    ui.label('📄 XML Invoice Converter').classes('text-3xl font-bold text-primary')
+    ui.label('Convert XML B2B invoices to Excel format').classes('text-xl text-yellow-600')
+    ui.separator()
+    
+    with ui.row().classes('gap-4'):
+        ui.label(f'Version: {VERSION}').classes('text-sm')
+        ui.label('Powered by NiceGUI').classes('text-sm')
+    
+    # Framework versions
+    import sys
+    try:
+        import nicegui
+        nicegui_version = nicegui.__version__
+    except:
+        nicegui_version = 'installed'
+    
+    with ui.expansion('📦 Framework versions', icon='info').classes('w-full'):
+        ui.label(f'😊 NiceGUI: {nicegui_version}')
+        ui.label(f'🐍 Python: {sys.version.split()[0]}')
+        ui.label(f'📊 Pandas: {pd.__version__}')
+        ui.label(f'🌍 Environment: {env_badge}')
 
-
-def on_run_click() -> None:
-    """Handle Run button click."""
-    st.session_state.clicked = True
-    st.session_state.download_completed = False
-    st.session_state.process_logged = False
-
-
-def check_parameter_changes(grouping: bool, energy: bool) -> None:
-    """Check if parameters changed and reset state if needed."""
-    if (st.session_state.prev_grouping_opt != grouping or 
-        st.session_state.prev_energy_mgmt != energy):
-        st.session_state.clicked = False
+# Input section
+with ui.card().classes('w-full mb-4'):
+    ui.label('📥 INPUT PARAMETERS').classes('text-lg font-bold text-primary mb-2')
     
-    st.session_state.prev_grouping_opt = grouping
-    st.session_state.prev_energy_mgmt = energy
-
-
-def display_header() -> None:
-    """Display application header."""
-    # Detect environment
-    in_docker = os.path.exists('/.dockerenv') or os.getenv('DOCKER_CONTAINER') == 'true'
-    env_badge = "🐳 Docker" if in_docker else "💻 Local"
+    upload_result = ui.label('No file uploaded').classes('text-sm text-gray-500 mb-2')
     
-    st.title(":blue[📄 XML Invoice Converter]")
-    st.subheader(":yellow[Convert XML B2B invoices to Excel format]")
+    # Container per l'upload widget
+    upload_container = ui.row().classes('w-full')
     
-    # Application details
-    st.markdown(f"**Version:** {VERSION}")
-    st.markdown("Powered with Streamlit :streamlit:")
+    def reset_upload():
+        """Reset upload state."""
+        state.uploaded_file_content = None
+        state.uploaded_file_name = None
+        upload_result.text = 'No file uploaded'
+        upload_result.classes('text-sm text-gray-500 mb-2', remove='text-green-600')
+        result_container.clear()
+        # Ricrea l'upload widget
+        upload_container.clear()
+        with upload_container:
+            ui.upload(
+                label='Select XML invoice B2B file',
+                on_multi_upload=handle_upload_complete,
+                auto_upload=True,
+                multiple=False,
+                max_files=1
+            ).props('accept=".xml"').classes('w-full')
+        logger.info("Upload reset")
     
-    # Framework versions expander
-    with st.expander("📦 Framework versions"):
-        st.markdown(f"- 🎈 **Streamlit:** {st.__version__}")
-        st.markdown(f"- 🐍 **Python:** {sys.version.split()[0]}")
-        st.markdown(f"- 📊 **Pandas:** {pd.__version__}")
-        st.markdown(f"- 📝 **xlsxwriter:** installed")
-        st.markdown(f"- 🔤 **xmltodict:** installed")
-        st.markdown(f"- 🌍 **Environment:** {env_badge}")
-    
-    st.divider()
-
-
-def display_footer() -> None:
-    """Display application footer."""
-    timestamp = datetime.now(TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
-    
-    st.divider()
-    st.markdown("**📋 APP LOG**")
-    st.success(f"✅ App terminated successfully at {timestamp}")
-
-
-def main():
-    """Main application function."""
-    # Configure page
-    st.set_page_config(
-        page_title="XML Invoice Converter",
-        page_icon="📄",
-        layout="wide",
-        initial_sidebar_state="auto"
-    )
-    
-    # Initialize
-    initialize_session_state()
-    
-    # Display header
-    display_header()
-    
-    # Input section
-    st.markdown(":blue-background[**📥 INPUT PARAMETERS**]")
-    uploaded_file = st.file_uploader(
-        "Select XML invoice B2B file:",
-        type="xml",
-        accept_multiple_files=False
-    )
-    
-    # Options
-    enable_grouping = st.toggle(
-        "Enable grouping",
-        help="Group output by fields: T_filein, T_num_doc, T_data_doc, P_nrdisegno, P_commessa, P_nrddt, P_intento"
-    )
-    
-    manage_energy = False
-    
-    if enable_grouping:
-        manage_energy = st.toggle(
-            "Energy contribution management", 
-            value=True,
-            help="Propagate drawing number, order number, and DDT number from previous lines when empty"
-        )
-    
-    # Check for parameter changes
-    check_parameter_changes(enable_grouping, manage_energy)
-    
-    # Run button
-    run_disabled = uploaded_file is None
-    st.button(
-        "🔥 Run",
-        disabled=run_disabled,
-        on_click=on_run_click,
-        width="stretch"
-    )
-    
-    # Process file
-    if st.session_state.clicked and uploaded_file is not None:
-        with st.spinner("Processing XML file..."):
-            try:
-                # Parse XML
-                parser = XMLInvoiceParser()
-                df = parser.parse(uploaded_file, enable_grouping, manage_energy)
+    async def handle_upload_complete(e):
+        try:
+            logger.info(f"Upload event received")
+            
+            if hasattr(e, 'files') and e.files:
+                file_upload = e.files[0]
+                state.uploaded_file_name = file_upload.name
                 
-                # Update filename in DataFrame
-                if not df.empty:
-                    df['T_filein'] = uploaded_file.name
-                
-                if df.empty:
-                    st.warning("⚠️ No data extracted from XML file")
+                if hasattr(file_upload, 'read'):
+                    state.uploaded_file_content = await file_upload.read()
+                elif hasattr(file_upload, 'content'):
+                    state.uploaded_file_content = file_upload.content
+                else:
+                    logger.error("Cannot read file content")
+                    ui.notify('Unable to read file content', type='negative')
                     return
                 
-                # Display results
-                st.divider()
-                st.markdown(":blue-background[**📊 OUTPUT DATAFRAME**]")
+                upload_result.text = f'✅ File uploaded: {state.uploaded_file_name} ({len(state.uploaded_file_content)} bytes)'
+                upload_result.classes('text-sm text-green-600 mb-2', remove='text-gray-500')
+                result_container.clear()
+                logger.info(f"File uploaded successfully: {state.uploaded_file_name}, size: {len(state.uploaded_file_content)}")
                 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("Header Count", df['T_num_doc'].nunique())
-                with col2:
-                    st.metric("Record Count", len(df))
+                # Sostituisci l'upload con un'area info + pulsante reset
+                upload_container.clear()
+                with upload_container:
+                    with ui.row().classes('w-full items-center gap-2'):
+                        ui.label(f'📎 {state.uploaded_file_name}').classes('flex-grow font-bold')
+                        ui.button(
+                            icon='close',
+                            on_click=reset_upload
+                        ).props('flat round color=negative').tooltip('Remove file and select another')
+            else:
+                logger.error("No files found in event")
+                ui.notify('Unable to process uploaded file - no files', type='negative')
+                return
+            
+        except Exception as ex:
+            logger.error(f"Error handling upload: {ex}", exc_info=True)
+            ui.notify(f'Error: {str(ex)}', type='negative')
+    
+    # Initial upload widget
+    with upload_container:
+        ui.upload(
+            label='Select XML invoice B2B file',
+            on_multi_upload=handle_upload_complete,
+            auto_upload=True,
+            multiple=False,
+            max_files=1
+        ).props('accept=".xml"').classes('w-full')
+    
+    # Options
+    ui.separator()
+    
+    with ui.row().classes('items-center gap-2'):
+        grouping_switch = ui.switch(
+            'Enable grouping',
+            value=False,
+            on_change=lambda e: setattr(state, 'enable_grouping', e.value) or update_energy_switch()
+        )
+        ui.icon('info').classes('text-sm text-gray-500').tooltip(
+            'Group output by fields: T_filein, T_num_doc, T_data_doc, P_nrdisegno, P_commessa, P_nrddt, P_intento'
+        )
+    
+    with ui.row().classes('items-center gap-2'):
+        energy_switch = ui.switch(
+            'Energy contribution management',
+            value=False,
+            on_change=lambda e: setattr(state, 'manage_energy', e.value)
+        )
+        energy_switch.visible = False
+        energy_icon = ui.icon('info').classes('text-sm text-gray-500')
+        energy_icon.tooltip(
+            'Propagate drawing number, order number, and DDT number from previous lines when empty'
+        )
+        energy_icon.visible = False
+    
+    def update_energy_switch():
+        energy_switch.visible = state.enable_grouping
+        energy_icon.visible = state.enable_grouping
+        if not state.enable_grouping:
+            state.manage_energy = False
+            energy_switch.value = False
+    
+    # Run button at the bottom
+    ui.separator()
+    ui.button('🔥 Run', on_click=lambda: process_file()).classes('w-full')
+
+# Results container
+result_container = ui.column().classes('w-full')
+
+def process_file():
+    """Process the uploaded XML file."""
+    result_container.clear()
+    
+    logger.info(f"Process file called. File name: {state.uploaded_file_name}, Content exists: {state.uploaded_file_content is not None}")
+    
+    if not state.uploaded_file_content:
+        ui.notify('Please upload a file first', type='warning')
+        logger.warning("No file content available")
+        return
+    
+    with result_container:
+        with ui.card().classes('w-full'):
+            ui.label('⏳ Processing XML file...').classes('text-lg')
+            ui.spinner(size='lg')
+    
+    try:
+        # Parse XML
+        df = parser.parse(
+            state.uploaded_file_content,
+            state.uploaded_file_name,
+            state.enable_grouping,
+            state.manage_energy
+        )
+        
+        state.df = df
+        
+        if df.empty:
+            result_container.clear()
+            with result_container:
+                ui.notify('⚠️ No data extracted from XML file', type='warning')
+            return
+        
+        # Log processing
+        usage_logger.log_usage(
+            filename=state.uploaded_file_name,
+            status="COMPLETED",
+            message=f"Processed with grouping={state.enable_grouping}, energy={state.manage_energy}",
+            action="PROCESS"
+        )
+        
+        # Display results
+        result_container.clear()
+        
+        with result_container:
+            with ui.card().classes('w-full mb-4'):
+                ui.label('📊 OUTPUT DATAFRAME').classes('text-lg font-bold text-primary mb-4')
                 
-                st.dataframe(df, width="stretch", hide_index=True)
+                with ui.row().classes('gap-4 mb-4'):
+                    with ui.card():
+                        ui.label('Header Count').classes('text-sm text-gray-600')
+                        ui.label(str(df['T_num_doc'].nunique())).classes('text-2xl font-bold')
+                    
+                    with ui.card():
+                        ui.label('Record Count').classes('text-sm text-gray-600')
+                        ui.label(str(len(df))).classes('text-2xl font-bold')
                 
-                # Export to Excel
-                if len(df) > 0:
+                # Display table with pagination
+                columns = [{'name': col, 'label': col, 'field': col} for col in df.columns]
+                rows = df.to_dict('records')
+                
+                ui.table(
+                    columns=columns,
+                    rows=rows,
+                    row_key='T_num_doc',
+                    pagination={'rowsPerPage': 20, 'sortBy': 'T_num_doc'}
+                ).classes('w-full')
+                
+                # Export button
+                ui.separator()
+                
+                def download_excel():
                     exporter = ExcelExporter()
-                    excel_buffer = exporter.create_excel_buffer(df)
-                    filename_out = uploaded_file.name.replace(".xml", ".xlsx")
+                    excel_data = exporter.create_excel_buffer(df)
+                    filename_out = state.uploaded_file_name.replace(".xml", ".xlsx")
                     
-                    # Log processing completion (only once)
-                    usage_logger = UsageLogger()
-                    if not st.session_state.process_logged:
-                        usage_logger.log_usage(
-                            filename=uploaded_file.name,
-                            status="COMPLETED",
-                            message=f"Processed with grouping={enable_grouping}, energy={manage_energy}",
-                            action="PROCESS"
-                        )
-                        st.session_state.process_logged = True
-                    
-                    download_clicked = st.download_button(
-                        label="⬇️ Download Excel",
-                        data=excel_buffer,
-                        file_name=filename_out,
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        on_click=reset_download_state,
-                        disabled=st.session_state.download_completed,
-                        width="stretch"
+                    # Log download
+                    usage_logger.log_usage(
+                        filename=filename_out,
+                        status="COMPLETED",
+                        message=f"Excel file downloaded",
+                        action="DOWNLOAD"
                     )
                     
-                    if download_clicked:
-                        st.success("✅ File downloaded successfully")
-                        st.session_state.download_completed = True
-                        
-                        # Log download
-                        usage_logger.log_usage(
-                            filename=filename_out,
-                            status="COMPLETED",
-                            message=f"Excel file downloaded",
-                            action="DOWNLOAD"
-                        )
+                    ui.download(excel_data, filename_out)
+                    ui.notify('✅ File downloaded successfully', type='positive')
                 
-                # Display footer
-                display_footer()
-                
-            except Exception as e:
-                logger.error(f"Error processing file: {e}", exc_info=True)
-                st.error(f"❌ Error processing XML file: {str(e)}")
+                ui.button('⬇️ Download Excel', on_click=download_excel).classes('w-full')
+            
+            # Footer
+            with ui.card().classes('w-full'):
+                timestamp = datetime.now(TIMEZONE).strftime("%Y-%m-%d %H:%M:%S")
+                ui.label('📋 APP LOG').classes('font-bold mb-2')
+                ui.label(f'✅ App terminated successfully at {timestamp}').classes('text-green-600')
+        
+    except Exception as e:
+        logger.error(f"Error processing file: {e}", exc_info=True)
+        result_container.clear()
+        with result_container:
+            ui.notify(f'❌ Error processing XML file: {str(e)}', type='negative')
 
 
-if __name__ == "__main__":
-    main()
+# Run the application
+if __name__ in {"__main__", "__mp_main__"}:
+    import argparse
+    
+    # Parse command line arguments
+    parser_args = argparse.ArgumentParser(description='XML Invoice Converter - NiceGUI')
+    parser_args.add_argument('--host', type=str, default='0.0.0.0', help='Server host')
+    parser_args.add_argument('--port', type=int, default=8502, help='Server port')
+    parser_args.add_argument('--reload', action='store_true', help='Enable auto-reload')
+    parser_args.add_argument('--show', action='store_true', help='Open browser automatically')
+    
+    args = parser_args.parse_args()
+    
+    logger.info(f"Starting XML Invoice Converter on {args.host}:{args.port}")
+    
+    ui.run(
+        title='XML Invoice Converter',
+        host=args.host,
+        port=args.port,
+        reload=args.reload,
+        show=args.show,
+        dark=False  # Start in light mode
+    )

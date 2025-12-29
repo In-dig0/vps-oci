@@ -8,7 +8,7 @@ Applicazione web per convertire fatture elettroniche XML in formato B2B in file 
 - 📊 **Raggruppamento intelligente**: Aggrega dati per campi specifici
 - ⚡ **Gestione contributi energetici**: Propaga automaticamente valori tra righe fattura
 - 📝 **Logging automatico**: Traccia tutte le operazioni in file di log
-- 🎨 **Interfaccia intuitiva**: UI moderna e user-friendly con Streamlit
+- 🎨 **Interfaccia intuitiva**: UI moderna e user-friendly con NiceGUI
 - 🐳 **Docker ready**: Supporto completo per containerizzazione
 
 ## 📋 Prerequisiti
@@ -193,13 +193,6 @@ Per testare l'applicazione, posiziona file XML di esempio nella cartella `input/
 
 ## 📝 Dipendenze
 
-```
-streamlit>=1.52.1
-pandas>=2.0.0
-xmltodict>=0.13.0
-xlsxwriter>=3.1.0
-```
-
 Versione completa in `requirements.txt`
 
 ## 🐛 Troubleshooting
@@ -243,7 +236,7 @@ Questo progetto è distribuito sotto licenza MIT. Vedi il file `LICENSE` per mag
 
 ## 🙏 Ringraziamenti
 
-- [Streamlit](https://streamlit.io) - Framework per l'interfaccia web
+- [NiceGUI](https://nicegui.io/) - Framework per backend e frontend
 - [Pandas](https://pandas.pydata.org) - Gestione dati
 - [xmltodict](https://github.com/martinblech/xmltodict) - Parsing XML
 
@@ -251,7 +244,7 @@ Questo progetto è distribuito sotto licenza MIT. Vedi il file `LICENSE` per mag
 
 ### Version 2.0 (2025-12-14)
 - ✨ Refactoring completo del codice
-- 🎨 Nuova interfaccia utente migliorata
+- 🎨 Nuova interfaccia utente migliorata con NiceGUI
 - 📝 Sistema di logging su file
 - 🐳 Supporto Docker
 - 🔧 Gestione contributi energetici
@@ -263,5 +256,5 @@ Questo progetto è distribuito sotto licenza MIT. Vedi il file `LICENSE` per mag
 
 ---
 
-**Nota**: Per supporto o segnalazione bug, apri una [issue](https://github.com/tuousername/xml-invoice-converter/issues) su GitHub.
+**Nota**: Per supporto o segnalazione bug, apri una [issue](https://github.com/In-dig0/xml-invoice-converter/issues) su GitHub.
 
