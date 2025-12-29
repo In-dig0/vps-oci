@@ -14,7 +14,7 @@ def main():
     in_docker = os.path.exists('/.dockerenv') or os.getenv('DOCKER_CONTAINER') == 'true'
     
     # Verifica che il file esista
-    app_file = Path("src/xml_invoice_converter_nicegui.py")  
+    app_file = Path("src/xml_invoice_converter.py")  
     if not app_file.exists():
         print(f"❌ Errore: File {app_file} non trovato!")
         sys.exit(1)
