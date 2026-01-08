@@ -1,260 +1,213 @@
-# 📄 XML Invoice Converter
+# XML Invoice Converter (XIC)
 
-Applicazione web per convertire fatture elettroniche XML in formato B2B in file Excel, con funzionalità avanzate di raggruppamento e gestione contributi energetici.
+A secure web application for converting Italian B2B XML invoices (FatturaPA format) to Excel spreadsheets.
 
-## 🎯 Caratteristiche
+![Application Screenshot](docs/screenshot.png)
 
-- ✅ **Conversione XML → Excel**: Trasforma fatture XML B2B in formato Excel strutturato
-- 📊 **Raggruppamento intelligente**: Aggrega dati per campi specifici
-- ⚡ **Gestione contributi energetici**: Propaga automaticamente valori tra righe fattura
-- 📝 **Logging automatico**: Traccia tutte le operazioni in file di log
-- 🎨 **Interfaccia intuitiva**: UI moderna e user-friendly con NiceGUI
-- 🐳 **Docker ready**: Supporto completo per containerizzazione
+## Features
 
-## 📋 Prerequisiti
+- **Secure XML Processing** - Built-in protection against XML bombs and malicious files
+- **Smart Parsing** - Extracts invoice headers, line items, and attachments
+- **Energy Management** - Propagates drawing numbers, orders, and DDT across lines
+- **Data Grouping** - Optional aggregation by key fields
+- **Excel Export** - Formatted output with professional styling
+- **Dark Mode** - User-friendly interface with theme switching
 
-- Python 3.9 o superiore
-- pip (package manager Python)
-- Git (opzionale, per clonare il repository)
+## Quick Start
 
-## 🚀 Installazione
+### Prerequisites
 
-### Metodo 1: Installazione Locale
+- Python 3.11 or higher
+- pip package manager
 
-1. **Clona il repository**
+### Installation
+
+1. Clone the repository:
 ```bash
 git clone https://github.com/In-dig0/xml-invoice-converter.git
 cd xml-invoice-converter
 ```
 
-2. **Crea un ambiente virtuale (raccomandato)**
-```bash
-python -m venv venv
-
-# Windows
-venv\scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-```
-
-3. **Installa le dipendenze**
+2. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Avvia l'applicazione**
+3. Create environment file:
 ```bash
-python run.py
+cp .env.example .env
 ```
 
-L'applicazione sarà disponibile su `http://localhost:8502`
+### Running the Application
 
-### Metodo 2: Docker
-
-1. **Build dell'immagine**
+**Development mode:**
 ```bash
-docker-compose build
+python xic_v5.py --reload --show
 ```
 
-2. **Avvia il container**
+**Production mode:**
 ```bash
-docker-compose up
+python xic_v5.py --host 0.0.0.0 --port 8502
 ```
 
-L'applicazione sarà disponibile su `http://localhost:8502`
+The application will be available at `http://localhost:8502`
 
-## 📖 Utilizzo
+## Configuration
 
-### Interfaccia Web
+Edit `.env` file to customize settings:
 
-1. **Carica il file XML**: Trascina o seleziona un file XML B2B
-2. **Configura le opzioni**:
-   - **Enable grouping**: Raggruppa i risultati per campi specifici
-   - **Energy contribution management**: Gestisce la propagazione dei valori
-3. **Clicca su "Run"**: Elabora il file
-4. **Scarica l'Excel**: Clicca su "Download Excel"
+```env
+# Application
+APP_NAME=XML_CONVERTER
+APP_CODE=XIC
+APP_VERSION=0.0.1
 
-### Campi di Raggruppamento
+# Security Limits
+MAX_FILE_SIZE_MB=1
+MAX_LINES_PER_INVOICE=10000
+MAX_XML_DEPTH=50
+PROCESSING_TIMEOUT=30
 
-Quando attivi l'opzione "Enable grouping", i dati vengono raggruppati per:
-- `T_filein` - Nome del file
-- `T_num_doc` - Numero documento
-- `T_data_doc` - Data documento
-- `P_nrdisegno` - Numero disegno
-- `P_commessa` - Numero commessa
-- `P_nrddt` - Numero DDT
-- `P_intento` - Intento
-
-### Gestione Contributi Energetici
-
-Quando attiva, questa opzione propaga automaticamente i valori di:
-- Numero disegno
-- Numero commessa  
-- Numero DDT
-
-dalle righe precedenti quando questi campi sono vuoti nella riga corrente.
-
-## 📁 Struttura del Progetto
-
-```
-XML_INVOICE_CONVERTER/
-├── src/
-│   └── xml_invoice_converter.py    # Applicazione principale
-├── logs/
-│   └── app_usage.log               # Log delle operazioni
-├── input/                          # Cartella per file XML di test
-├── venv/                           # Ambiente virtuale Python
-├── .gitignore                      # File Git ignore
-├── docker-compose.yml              # Configurazione Docker Compose
-├── Dockerfile                      # Dockerfile per containerizzazione
-├── README.md                       # Questo file
-├── requirements.txt                # Dipendenze Python
-└── run.py                         # Script di avvio
-
+# Logging
+LOG_LEVEL=INFO
 ```
 
-## 🔧 Configurazione
+## Usage
 
-### Variabili d'Ambiente
+1. **Upload XML File** - Select a valid FatturaPA XML invoice
+2. **Configure Options**:
+   - Enable Grouping: Aggregate lines by key fields
+   - Energy Management: Propagate reference data across lines
+3. **Process** - Click "ESEGUI CONVERSIONE"
+4. **Download** - Export results to Excel
 
-L'applicazione supporta le seguenti variabili d'ambiente:
+### Output Structure
 
-- `PORT`: Porta su cui avviare il server (default: 8502)
-- `DOCKER_CONTAINER`: Indica se l'app è in esecuzione in Docker
+The Excel file contains the following columns:
 
-### File di Log
+| Column | Description |
+|--------|-------------|
+| `T_filein` | Source filename |
+| `T_piva_mitt` | Supplier VAT number |
+| `T_ragsoc_mitt` | Supplier name |
+| `T_num_doc` | Document number |
+| `T_data_doc` | Document date |
+| `T_importo_doc` | Total amount |
+| `P_nr_linea` | Line number |
+| `P_codart` | Article code |
+| `P_desc_linea` | Line description |
+| `P_qta` | Quantity |
+| `P_um` | Unit of measure |
+| `P_przunit` | Unit price |
+| `P_prezzo_tot` | Total price |
+| `P_codiva` | VAT code |
+| `P_nrdisegno` | Drawing number |
+| `P_commessa` | Order number |
+| `P_nrddt` | DDT number |
+| `P_intento` | Intent |
 
-I log vengono salvati automaticamente in `logs/app_usage.log` con il formato:
+## Security Features
 
-```
-YYYY-MM-DD HH:MM:SS | APP_NAME | APP_CODE | ACTION | FILENAME | STATUS | MESSAGE
-```
+- **File Size Limits** - Configurable maximum upload size
+- **XML Depth Check** - Prevents deeply nested XML attacks
+- **Safe Parsing** - Uses `defusedxml` library
+- **Path Traversal Protection** - Validates filenames
+- **Processing Timeout** - Prevents DoS attacks
+- **SHA256 Hashing** - File integrity tracking
 
-Esempio:
-```
-2025-12-14 08:45:45 | XML_CONVERTER | XMLC_v2 | PROCESS | invoice.xml | COMPLETED | Processed with grouping=False, energy=False
-2025-12-14 08:45:48 | XML_CONVERTER | XMLC_v2 | DOWNLOAD | invoice.xlsx | COMPLETED | Excel file downloaded
-```
+## Docker Deployment
 
-## 📊 Output Excel
-
-Il file Excel generato contiene le seguenti colonne:
-
-### Dati Testata (prefisso T_)
-- `T_filein`: Nome file XML originale
-- `T_piva_mitt`: Partita IVA mittente
-- `T_ragsoc_mitt`: Ragione sociale mittente
-- `T_num_doc`: Numero documento
-- `T_data_doc`: Data documento
-- `T_importo_doc`: Importo totale documento
-
-### Dati Righe (prefisso P_)
-- `P_nr_linea`: Numero linea
-- `P_codart`: Codice articolo
-- `P_desc_linea`: Descrizione
-- `P_qta`: Quantità
-- `P_um`: Unità di misura
-- `P_przunit`: Prezzo unitario
-- `P_prezzo_tot`: Prezzo totale
-- `P_codiva`: Codice IVA
-- `P_nrdisegno`: Numero disegno
-- `P_commessa`: Numero commessa
-- `P_nrddt`: Numero DDT
-- `P_intento`: Intento
-
-## 🛠️ Sviluppo
-
-### Requisiti di Sviluppo
-
+Build the image:
 ```bash
-pip install -r requirements.txt
+docker build -t xic:latest .
 ```
 
-### Struttura del Codice
-
-Il codice è organizzato in classi principali:
-
-- **`XMLInvoiceParser`**: Parser per file XML fatture
-- **`UsageLogger`**: Gestione logging applicazione
-- **`ExcelExporter`**: Esportazione dati in Excel
-
-### Best Practices
-
-- Usa `dataclass` per strutture dati
-- Type hints completi
-- Docstrings per documentazione
-- Logging strutturato
-- Gestione errori robusta
-
-### Testing
-
-Per testare l'applicazione, posiziona file XML di esempio nella cartella `input/` e caricali tramite l'interfaccia.
-
-## 📝 Dipendenze
-
-Versione completa in `requirements.txt`
-
-## 🐛 Troubleshooting
-
-### L'applicazione non si avvia
-
+Run the container:
 ```bash
-# Verifica l'installazione di Python
-python --version
-
-# Reinstalla le dipendenze
-pip install -r requirements.txt --force-reinstall
+docker run -d \
+  -p 8502:8502 \
+  -v $(pwd)/logs:/app/logs \
+  --name xic \
+  xic:latest
 ```
 
-### Errore "File not found"
+## Project Structure
 
-Assicurati che il file XML sia in formato B2B valido e che il percorso sia corretto.
+```
+xml-invoice-converter/
+├── xic.py              # Main application
+├── .env.example           # Environment template
+├── requirements.txt       # Python dependencies
+├── Dockerfile            # Docker configuration
+├── logs/                 # Application logs
+│   └── xic_usage.log
+└── docs/                 # Documentation
+    └── screenshot.png
+```
 
-### Log non vengono creati
+## Logging
 
-Verifica che la cartella `logs/` esista e che l'applicazione abbia i permessi di scrittura.
+Application logs are stored in `logs/xic_usage.log`:
 
-## 🤝 Contribuire
+```
+2026-01-06 14:30:45 | XML_CONVERTER | XIC | PROCESS | invoice.xml | COMPLETED | Processed in 0.15s | abc123...
+```
 
-I contributi sono benvenuti! Per contribuire:
+## Troubleshooting
 
-1. Fai un fork del progetto
-2. Crea un branch per la tua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit delle modifiche (`git commit -m 'Add some AmazingFeature'`)
-4. Push sul branch (`git push origin feature/AmazingFeature`)
-5. Apri una Pull Request
+**File upload fails:**
+- Check file size (max 1MB by default)
+- Verify XML format (must be FatturaPA)
+- Check logs for detailed errors
 
-## 📄 Licenza
+**No data extracted:**
+- Ensure `<DettaglioLinee>` tags are present
+- Verify XML structure matches FatturaPA schema
 
-Questo progetto è distribuito sotto licenza MIT. Vedi il file `LICENSE` per maggiori dettagli.
+**Performance issues:**
+- Reduce `MAX_LINES_PER_INVOICE` in `.env`
+- Check system resources
+- Review processing timeout settings
 
-## 👤 Autore
+## Dependencies
 
-**Riccardo Baravelli**
-- GitHub: [Ind-dig0](https://github.com/In-dig0)
+- **NiceGUI** - Web framework
+- **Pandas** - Data processing
+- **xmltodict** - XML parsing
+- **defusedxml** - Secure XML parsing
+- **xlsxwriter** - Excel generation
 
-## 🙏 Ringraziamenti
+See `requirements.txt` for complete list.
 
-- [NiceGUI](https://nicegui.io/) - Framework per backend e frontend
-- [Pandas](https://pandas.pydata.org) - Gestione dati
-- [xmltodict](https://github.com/martinblech/xmltodict) - Parsing XML
+## Contributing
 
-## 📚 Changelog
+Contributions are welcome! Please:
 
-### Version 2.0 (2025-12-14)
-- ✨ Refactoring completo del codice
-- 🎨 Nuova interfaccia utente migliorata con NiceGUI
-- 📝 Sistema di logging su file
-- 🐳 Supporto Docker
-- 🔧 Gestione contributi energetici
-- 📊 Export Excel con formattazione
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### Version 1.0
-- 🎉 Release iniziale
-- ⚙️ Conversione base XML → Excel
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Authors
+
+- Your Name - *Initial work*
+
+## Acknowledgments
+
+- Built with [NiceGUI](https://nicegui.io/)
+- FatturaPA format specification by [Agenzia delle Entrate](https://www.agenziaentrate.gov.it/)
+
+## Support
+
+For issues and questions:
+- Open an [issue](https://github.com/yourusername/xml-invoice-converter/issues)
+- Check existing [documentation](docs/)
 
 ---
 
-**Nota**: Per supporto o segnalazione bug, apri una [issue](https://github.com/In-dig0/xml-invoice-converter/issues) su GitHub.
-
+**Note:** This tool is designed for Italian B2B invoices (FatturaPA format). For other formats, modifications may be required.
