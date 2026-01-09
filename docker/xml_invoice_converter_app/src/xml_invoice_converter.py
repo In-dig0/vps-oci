@@ -434,6 +434,18 @@ def log_usage(filename, status="COMPLETED", message="", action="PROCESS", file_h
     except Exception as e:
         logger.error(f"Error logging usage: {e}", exc_info=True)
 
+# Funzione per ottenere la data di modifica del file
+def get_last_update():
+    """Ottiene la data di ultima modifica del file principale."""
+    try:
+        file_path = 'src/xml_invoice_converter.py'
+        if os.path.exists(file_path):
+            timestamp = os.path.getmtime(file_path)
+            return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
+        return 'N/A'
+    except Exception as e:
+        logger.error(f"Error getting last update date: {e}")
+        return 'N/A'
 
 if __name__ in {"__main__", "__mp_main__"}:
 
@@ -506,13 +518,20 @@ if __name__ in {"__main__", "__mp_main__"}:
     # 3. Card principale
     mycol1 = '#2980B9'  # Custom color
     mycol2 = '#888B8A'  # Custom color
-    with ui.card().classes('w-full max-w-4xl mx-auto shadow-lg border border-gray-200'):
+    #with ui.card().classes('w-full max-w-4xl mx-auto shadow-lg border border-gray-200'):
+    with ui.card().classes('w-full max-w-4xl mx-auto shadow-lg border border-gray-200 mt-1'):
         ui.label(f'📄 {APP_NAME}').classes('text-3xl font-bold').style(f'color: {mycol1}')
         ui.label('A secure web application for converting Italian B2B XML invoices (FatturaPA format) to Excel spreadsheets.').classes('text-lg text-yellow-600')
         ui.separator()
         
-        with ui.row().classes('gap-4'):
-            ui.label(f'App version: {APP_VERSION}').classes('font-bold').style(f'color: {mycol2}')
+        with ui.row().classes('gap-6 items-center'):
+            with ui.row().classes('items-center gap-1'):
+                ui.icon('info', size='sm').classes('text-gray-500')
+                ui.label(f'Version: {APP_VERSION}').classes('text-sm font-bold')
+            
+            with ui.row().classes('items-center gap-1'):
+                ui.icon('update', size='sm').classes('text-gray-500')
+                ui.label(f'Updated: {get_last_update()}').classes('text-sm')
 
         # --- SEZIONE FRAMEWORK PULITA ---
         with ui.expansion('📦 Framework versions').classes('w-full border-t border-gray-100 mt-2'):
