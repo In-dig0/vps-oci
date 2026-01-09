@@ -524,37 +524,36 @@ if __name__ in {"__main__", "__mp_main__"}:
                         nicegui_version = nicegui.__version__
                     except:
                         nicegui_version = 'installed'
-                    # Contenitore con sfondo bianco per l'icona NiceGUI
+                    # Icona NiceGUI locale con sfondo bianco
                     with ui.element('div').classes('p-1 bg-white rounded'):
-                        ui.image('https://nicegui.io/logo_square.png').classes('w-5 h-5')
+                        ui.image('assets/icons/nicegui_logo.png').classes('w-5 h-5')
                     ui.html(f'<span style="{label_style}">NiceGUI</span>: {nicegui_version}', sanitize=False)
 
                 with ui.row().classes('items-center gap-3'):
-                    ui.image('https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg').classes('w-6 h-6')
+                    # Icona Python locale
+                    ui.image('assets/icons/python_logo.svg').classes('w-6 h-6')
                     ui.html(f'<span style="{label_style}">Python</span>: {sys.version.split()[0]}', sanitize=False)
 
                 with ui.row().classes('items-center gap-3'):
-                    ui.icon('table_view', color='teal').classes('text-2xl')
+                    # Icona Pandas locale
+                    ui.image('assets/icons/pandas_logo.svg').classes('w-6 h-6')
                     ui.html(f'<span style="{label_style}">Pandas</span>: {pd.__version__}', sanitize=False)
 
                 with ui.row().classes('items-center gap-3'):
                     ui.icon('public', color='blue').classes('text-2xl')
                     ui.html(f'<span style="{label_style}">Environment</span>: {env_badge}', sanitize=False)
                 
-                # Link GitHub con icona
+                # Link GitHub con icona locale
                 ui.separator().classes('my-2')
                 with ui.row().classes('items-center gap-3'):
-                    ui.html('''
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-                        </svg>
-                    ''', sanitize=False).classes('text-gray-700 dark:text-gray-300')
+                    ui.image('assets/icons/github_logo.svg').classes('w-6 h-6 dark:invert')
                     ui.link(
                         'View on GitHub', 
-                        'https://github.com/In-dig0/xml-converter-app',
+                        'https://github.com/yourusername/xml-invoice-converter',
                         new_tab=True
                     ).classes('text-blue-600 hover:text-blue-800 dark:text-blue-400 font-bold underline')
-# --- STATO DELL'APPLICAZIONE ---
+    
+    # --- STATO DELL'APPLICAZIONE ---
     app_state = {
         'xml_content': None, 
         'xml_filename': None,

@@ -2,7 +2,7 @@
 
 A secure web application for converting Italian B2B XML invoices (FatturaPA format) to Excel spreadsheets.
 
-![Application Screenshot](docs/screenshot.png)
+![Application Screenshot](assets/screenshots/xic_main.png)
 
 ## Features
 
