@@ -10,7 +10,7 @@ from datetime import datetime
 
 # Third-party imports
 import pandas as pd
-from pkg_resources import safe_name
+#from pkg_resources import safe_name
 import xmltodict
 from zoneinfo import ZoneInfo
 from nicegui import ui, app, nicegui
@@ -549,7 +549,7 @@ if __name__ in {"__main__", "__mp_main__"}:
                     ui.image('assets/icons/github_logo.svg').classes('w-6 h-6 dark:invert')
                     ui.link(
                         'View on GitHub', 
-                        'https://github.com/yourusername/xml-invoice-converter',
+                        'https://github.com/In-dig0/vps-oci/tree/main/docker/xml_invoice_converter_app',
                         new_tab=True
                     ).classes('text-blue-600 hover:text-blue-800 dark:text-blue-400 font-bold underline')
     
